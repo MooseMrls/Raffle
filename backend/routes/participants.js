@@ -3,6 +3,7 @@ const multer = require('multer');
 const Papa = require('papaparse');
 const XLSX = require('xlsx');
 const Participant = require('../models/Participant');
+const Winner = require('../models/Winner');
 
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage() });
@@ -87,7 +88,7 @@ router.post('/upload', upload.single('file'), async (req, res) => {
   }
 });
 
-// POST /api/participants/spin -> pick a random pending participant, mark as winner
+// POST /api/participants/spin -> pick a random pending participant, mark as winner & record in Winner model
 router.post('/spin', async (req, res) => {
   try {
     const pool = await Participant.find({ status: 'pending' });
@@ -98,6 +99,14 @@ router.post('/spin', async (req, res) => {
     winner.status = 'winner';
     winner.wonAt = new Date();
     await winner.save();
+
+    const currentWinnerCount = await Winner.countDocuments({});
+    await Winner.create({
+      participantId: winner._id,
+      name: winner.name,
+      drawNumber: currentWinnerCount + 1,
+      wonAt: winner.wonAt,
+    });
 
     const remaining = await Participant.countDocuments({ status: 'pending' });
     res.json({ winner, remaining });
@@ -120,7 +129,8 @@ router.delete('/:id', async (req, res) => {
 router.delete('/', async (req, res) => {
   try {
     await Participant.deleteMany({});
-    res.json({ message: 'All participants cleared.' });
+    await Winner.deleteMany({});
+    res.json({ message: 'All participants and winner records cleared.' });
   } catch (err) {
     res.status(500).json({ message: 'Failed to reset', error: err.message });
   }

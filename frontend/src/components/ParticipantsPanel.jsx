@@ -90,10 +90,10 @@ export default function ParticipantsPanel({ pendingCount, onAddNames, onUploadFi
             </div>
           )}
 
-          <button type="button" className="btn-danger-text btn-sm" onClick={onReset}>
+          {/* <button type="button" className="btn-danger-text btn-sm" onClick={onReset}>
             <RotateCcw size={14} />
             <span>Reset Pool & Winners</span>
-          </button>
+          </button> */}
         </div>
       )}
     </div>
