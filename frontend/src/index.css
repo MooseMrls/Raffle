@@ -93,7 +93,8 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 1.25rem 2.5rem;
-  background: #ffffff;
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(8px);
   border-bottom: 2px solid var(--yellow);
   position: sticky;
   top: 0;
@@ -350,7 +351,7 @@ body {
 /* Slot Machine Frame & Reel */
 .slot-machine-frame {
   position: relative;
-  background: rgba(255, 255, 255, 0.5);
+  background: transparent;
   border: none;
   border-radius: 16px;
   padding: 8px;
@@ -360,8 +361,8 @@ body {
   position: relative;
   height: 240px !important;
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.88);
-  backdrop-filter: blur(6px);
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(4px);
   border: 2px solid var(--yellow-hover);
   border-radius: 10px;
 }
@@ -477,7 +478,11 @@ body {
   border: none;
   justify-content: center;
   padding: 3rem;
-  background: #ffffff;
+  background-color: var(--bg-color);
+  background-image: url('./img/sedes.png');
+  background-repeat: no-repeat;
+  background-position: left -30px top 0px;
+  background-size: auto 100vh;
   z-index: 9999;
 }
 
@@ -956,9 +961,8 @@ body {
   align-items: center;
   justify-content: center;
   padding: 1.25rem 2.5rem;
-  border-top: 1px solid rgba(229, 231, 235, 0.5);
-  background: rgba(255, 255, 255, 0.65);
-  backdrop-filter: blur(8px);
+  border-top: none;
+  background: transparent;
   margin-top: auto;
   position: relative;
   z-index: 10;
