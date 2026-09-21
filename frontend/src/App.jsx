@@ -4,9 +4,13 @@ import ParticipantsPanel from './components/ParticipantsPanel.jsx';
 import WinnersPanel from './components/WinnersPanel.jsx';
 import Footer from './components/Footer.jsx';
 import WinnerModal from './components/WinnerModal.jsx';
-import { getParticipants, addParticipants, uploadParticipants, spinWheel, resetAll } from './api.js';
+import ConfirmModal from './components/ConfirmModal.jsx';
+import ToastContainer from './components/ToastContainer.jsx';
+import { getParticipants, addParticipants, uploadParticipants, spinWheel, resetAll, clearPool } from './api.js';
 import { ShieldCheck, Sun, Moon, Sunset } from 'lucide-react';
 import mapsaLogo from './img/MaPSA 1.png';
+
+let toastIdCounter = 0;
 
 function getGreetingData() {
   const hour = new Date().getHours();
@@ -18,11 +22,20 @@ function getGreetingData() {
 export default function App() {
   const [pending, setPending] = useState([]);
   const [winners, setWinners] = useState([]);
-  const [error, setError] = useState('');
-  const [notice, setNotice] = useState('');
   const [loading, setLoading] = useState(true);
   const [winnerModalData, setWinnerModalData] = useState(null);
   const [poolExpanded, setPoolExpanded] = useState(false);
+  const [confirmModal, setConfirmModal] = useState(null);
+  const [toasts, setToasts] = useState([]);
+
+  const addToast = useCallback((message, type = 'success', duration = 4000) => {
+    const id = ++toastIdCounter;
+    setToasts((prev) => [...prev, { id, message, type, duration }]);
+  }, []);
+
+  const dismissToast = useCallback((id) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }, []);
 
   const refresh = useCallback(async () => {
     try {
@@ -30,48 +43,64 @@ export default function App() {
       setPending(data.pending);
       setWinners(data.winners);
     } catch (err) {
-      setError('Could not reach the backend server. Make sure node server.js is running.');
+      addToast('Could not reach the backend server. Make sure node server.js is running.', 'error', 6000);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [addToast]);
 
   useEffect(() => {
     refresh();
   }, [refresh]);
 
-  const flash = (setter, msg) => {
-    setter(msg);
-    setTimeout(() => setter(''), 4000);
-  };
-
   const handleAddNames = async (names) => {
-    setError('');
     try {
       await addParticipants(names);
       await refresh();
-      flash(setNotice, `Added ${names.length} participant${names.length === 1 ? '' : 's'} to the pool.`);
+      addToast(`Added ${names.length} participant${names.length === 1 ? '' : 's'} to the pool.`);
     } catch (err) {
-      flash(setError, err.response?.data?.message || 'Failed to add names.');
+      addToast(err.response?.data?.message || 'Failed to add names.', 'error');
     }
   };
 
   const handleUploadFile = async (file) => {
-    setError('');
     try {
       const { data } = await uploadParticipants(file);
       await refresh();
-      flash(setNotice, `Imported ${data.inserted} participant${data.inserted === 1 ? '' : 's'} from ${file.name}.`);
+      addToast(`Imported ${data.inserted} participant${data.inserted === 1 ? '' : 's'} from ${file.name}.`);
     } catch (err) {
-      flash(setError, err.response?.data?.message || 'Failed to import file.');
+      addToast(err.response?.data?.message || 'Failed to import file.', 'error');
     }
   };
 
-  const handleReset = async () => {
-    if (!window.confirm('Clear all participants and winners?')) return;
-    await resetAll();
-    await refresh();
-    flash(setNotice, 'Pool and winners cleared successfully.');
+  const handleReset = () => {
+    setConfirmModal({
+      title: 'Reset Everything',
+      message: 'This will permanently clear all participants and winner records. This action cannot be undone.',
+      confirmLabel: 'Reset All',
+      confirmVariant: 'danger',
+      onConfirm: async () => {
+        setConfirmModal(null);
+        await resetAll();
+        await refresh();
+        addToast('Pool and winners cleared successfully.');
+      },
+    });
+  };
+
+  const handleClearNames = () => {
+    setConfirmModal({
+      title: 'Clear Names',
+      message: 'This will remove all names from the participant pool. Winner records will be preserved.',
+      confirmLabel: 'Clear Names',
+      confirmVariant: 'warning',
+      onConfirm: async () => {
+        setConfirmModal(null);
+        await clearPool();
+        await refresh();
+        addToast('Pool cleared. Winner records are preserved.');
+      },
+    });
   };
 
   const { spinning, activeIndex, runSpin } = useDrumSpin({
@@ -83,14 +112,13 @@ export default function App() {
   });
 
   const handleSpin = async (runReelSpin) => {
-    setError('');
     try {
       await runSpin(async () => {
         const { data } = await spinWheel();
         return data.winner;
       }, runReelSpin);
     } catch (err) {
-      flash(setError, err.response?.data?.message || 'Could not spin — the pool may be empty.');
+      addToast(err.response?.data?.message || 'Could not spin — the pool may be empty.', 'error');
     }
   };
 
@@ -130,8 +158,7 @@ export default function App() {
             onAddNames={handleAddNames}
             onUploadFile={handleUploadFile}
             onReset={handleReset}
-            error={error}
-            notice={notice}
+            onClearNames={handleClearNames}
             isExpanded={poolExpanded}
             onToggleExpanded={setPoolExpanded}
           />
@@ -140,7 +167,18 @@ export default function App() {
       </main>
 
       <Footer />
+
+      <ToastContainer toasts={toasts} onDismiss={dismissToast} />
+
+      <ConfirmModal
+        open={!!confirmModal}
+        title={confirmModal?.title}
+        message={confirmModal?.message}
+        confirmLabel={confirmModal?.confirmLabel}
+        confirmVariant={confirmModal?.confirmVariant}
+        onConfirm={confirmModal?.onConfirm}
+        onCancel={() => setConfirmModal(null)}
+      />
     </div>
   );
 }
-

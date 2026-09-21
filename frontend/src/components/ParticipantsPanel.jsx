@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
-import { Users, UserPlus, UploadCloud, RotateCcw, AlertCircle, CheckCircle2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Users, UserPlus, UploadCloud, RotateCcw, ChevronDown, ChevronUp, Eraser } from 'lucide-react';
 
-export default function ParticipantsPanel({ pendingCount, onAddNames, onUploadFile, onReset, error, notice, isExpanded: isExpandedProp, onToggleExpanded }) {
+export default function ParticipantsPanel({ pendingCount, onAddNames, onUploadFile, onReset, onClearNames, isExpanded: isExpandedProp, onToggleExpanded }) {
   const [nameInput, setNameInput] = useState('');
   const [internalExpanded, setInternalExpanded] = useState(false);
 
@@ -77,23 +77,17 @@ export default function ParticipantsPanel({ pendingCount, onAddNames, onUploadFi
             />
           </div>
 
-          {error && (
-            <div className="panel-message panel-message-error">
-              <AlertCircle size={14} />
-              <span>{error}</span>
-            </div>
-          )}
-          {notice && (
-            <div className="panel-message panel-message-ok">
-              <CheckCircle2 size={14} />
-              <span>{notice}</span>
-            </div>
-          )}
 
-          {/* <button type="button" className="btn-danger-text btn-sm" onClick={onReset}>
-            <RotateCcw size={14} />
-            <span>Reset Pool & Winners</span>
-          </button> */}
+          <div className="panel-actions-row">
+            <button type="button" className="btn-warning-text btn-sm" onClick={onClearNames}>
+              <Eraser size={14} />
+              <span>Clear Names</span>
+            </button>
+            <button type="button" className="btn-danger-text btn-sm" onClick={onReset}>
+              <RotateCcw size={14} />
+              <span>Reset Pool & Winners</span>
+            </button>
+          </div>
         </div>
       )}
     </div>

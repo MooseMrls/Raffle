@@ -115,6 +115,16 @@ router.post('/spin', async (req, res) => {
   }
 });
 
+// DELETE /api/participants/clear-pool -> clear only pending names, keep winners intact
+router.delete('/clear-pool', async (req, res) => {
+  try {
+    const result = await Participant.deleteMany({ status: 'pending' });
+    res.json({ message: `Cleared ${result.deletedCount} pending participant(s). Winners are preserved.` });
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to clear pool', error: err.message });
+  }
+});
+
 // DELETE /api/participants/:id -> remove a single participant
 router.delete('/:id', async (req, res) => {
   try {
